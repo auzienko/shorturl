@@ -4,9 +4,13 @@
                             [muuntaja.core :as m]
                             [shorturl.db :as db]
                             [shorturl.slug :as s]
+                            [clojure.java.io :as io]
                             [reitit.ring.middleware.muuntaja :as muuntaja]))
 
 ;; https://github.com/alndvz/vid4/blob/master/src/vid4/core.clj
+
+(defn index []
+  (slurp (io/resource "public/index.html")))
 
 (defn- redirect-hadler [req]
   (let [slug (get-in req [:path-params :slug])
@@ -19,7 +23,7 @@
   (let [url (get-in req [:body-params :url])
         slug (s/create-slug)]
     (db/insert-record slug url)
-    (r/response (str "Create slug " slug))))
+    (r/response {:slug slug})))
 
 (def app
   (ring/ring-handler
@@ -28,7 +32,8 @@
      [":slug/" redirect-hadler]
      ["api/"
       ["redirect/" {:post create-redirect-hadler}]]
-     ["" {:handler (fn [req] {:body "hello" :status 200})}]]
+     ["assets/*" (ring/create-resource-handler {:root "public/assets"})]
+     ["" {:handler (fn [req] {:body (index) :status 200})}]]
     {:data {:muuntaja m/instance
             :middleware [muuntaja/format-middleware]}})))
 

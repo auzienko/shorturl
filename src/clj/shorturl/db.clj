@@ -39,3 +39,5 @@
                   (sql/format)))
       first
       :url))
+
+(find-by-slug "hello")
